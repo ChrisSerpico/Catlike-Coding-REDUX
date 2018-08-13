@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Fractal : MonoBehaviour {
 
-	public Mesh mesh; 
+	public Mesh[] meshes; 
 	public Material material; 
 
 	public int maxDepth; 
@@ -14,6 +14,14 @@ public class Fractal : MonoBehaviour {
 	public float childScale; 
 
 	private Material[] materials; 
+
+	[Range(0, 1)] // added since we don't want ranges outside of these values 
+	public float spawnProbability; 
+
+	public float maxRotationSpeed; 
+	private float rotationSpeed; 
+
+	public float maxTwist; 
 
 	private void InitializeMaterials() {
 		materials = new Material[maxDepth + 1]; 
@@ -31,11 +39,17 @@ public class Fractal : MonoBehaviour {
 		if (materials == null) {
 			InitializeMaterials(); 
 		}
-		gameObject.AddComponent<MeshFilter>().mesh = mesh; 
+		gameObject.AddComponent<MeshFilter>().mesh = meshes[Random.Range(0, meshes.Length)]; 
 		gameObject.AddComponent<MeshRenderer>().material = materials[depth]; 
+		rotationSpeed = Random.Range(-maxRotationSpeed, maxRotationSpeed); 
+		transform.Rotate(Random.Range(-maxTwist, maxTwist), 0f, 0f); 
 		if (depth < maxDepth) {
 			StartCoroutine(CreateChildren()); 
 		}
+	}
+
+	void Update() {
+		transform.Rotate(0f, rotationSpeed * Time.deltaTime, 0f); 
 	}
 
 	private static Vector3[] childDirections = {
@@ -56,18 +70,23 @@ public class Fractal : MonoBehaviour {
 
 	private IEnumerator CreateChildren() {
 		for (int i = 0; i < childDirections.Length; i++) {
-			yield return new WaitForSeconds(Random.Range(0.1f, 0.5f)); 
-			new GameObject("Fractal Child").AddComponent<Fractal>().Initialize(this, i);
+			if (Random.value < spawnProbability) {
+				yield return new WaitForSeconds(Random.Range(0.1f, 0.5f)); 
+				new GameObject("Fractal Child").AddComponent<Fractal>().Initialize(this, i);
+			}
 		}
 	}
 
 	private void Initialize(Fractal parent, int childIndex) {
-		mesh = parent.mesh; 
+		meshes = parent.meshes; 
 		materials = parent.materials; 
 		material = parent.material; 
 		maxDepth = parent.maxDepth; 
 		depth = parent.depth + 1; 
 		childScale = parent.childScale; 
+		spawnProbability = parent.spawnProbability; 
+		maxRotationSpeed = parent.maxRotationSpeed; 
+		maxTwist = parent.maxTwist; 
 		transform.parent = parent.transform; 
 		transform.localScale = Vector3.one * childScale; 
 		transform.localPosition = childDirections[childIndex] * (0.5f + 0.5f * childScale); 
