@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Shape : PersistableObject {
 
+    private int shapeId = int.MinValue; 
+   
     public int ShapeId {
         get {
             return shapeId; 
@@ -18,5 +20,10 @@ public class Shape : PersistableObject {
         }
     }
 
-    private int shapeId = int.MinValue; 
+    public int MaterialId { get; private set; } 
+
+    public void SetMaterial(Material material, int materialId) {
+        GetComponent<MeshRenderer>().material = material; 
+        MaterialId = materialId; 
+    }
 }
